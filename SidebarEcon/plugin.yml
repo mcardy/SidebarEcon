@@ -1,0 +1,5 @@
+name: SidebarEcon
+author: minnymin3
+version: 1.0
+main: minny.sidebarecon.SidebarEcon
+depend: [Vault]
