@@ -21,46 +21,56 @@ import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 
 public class SidebarEcon extends JavaPlugin implements Listener {
-	
-	Scoreboard board;
+
 	Economy econ = null;
 	List<String> players = new ArrayList<String>();
-	
+
 	@Override
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
-		board = Bukkit.getScoreboardManager().getNewScoreboard();
-		economy();
+		setupEconomy();
 		for (Player p : Bukkit.getOnlinePlayers()) {
-			Objective obj = board.registerNewObjective(p.getName() + "econ", "dummy");
+			p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+			Scoreboard board;
+			board = Bukkit.getScoreboardManager().getNewScoreboard();
+			Objective obj = board.registerNewObjective(p.getName() + "econ",
+					"dummy");
 			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 			obj.setDisplayName(ChatColor.GOLD + "Money");
 			Score score = obj.getScore(p);
 			score.setScore((int) Math.round(econ.getBalance(p.getName())));
 			p.setScoreboard(board);
 			this.players.add(p.getName());
-			new UpdateScoreboard(this, p, obj).runTaskLater(this, 20);
+			getServer().getScheduler().scheduleSyncRepeatingTask(this,
+					new UpdateScoreboard(this, p, obj), 10L, 10L);
 		}
 	}
-	
+
 	@EventHandler
 	public void onJoin(PlayerJoinEvent e) {
-		Objective obj = board.registerNewObjective(e.getPlayer().getName() + "econ", "dummy");
-		obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-		obj.setDisplayName(ChatColor.GOLD + "Money");
-		Score score = obj.getScore(e.getPlayer());
-		score.setScore((int) Math.round(econ.getBalance(e.getPlayer().getName())));
-		e.getPlayer().setScoreboard(board);
-		this.players.add(e.getPlayer().getName());
-		new UpdateScoreboard(this, e.getPlayer(), obj).runTaskLater(this, 20);
+		for (Player p : Bukkit.getOnlinePlayers()) {
+			p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+			Scoreboard board;
+			board = Bukkit.getScoreboardManager().getNewScoreboard();
+			Objective obj = board.registerNewObjective(p.getName() + "econ",
+					"dummy");
+			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+			obj.setDisplayName(ChatColor.GOLD + "Money");
+			Score score = obj.getScore(p);
+			score.setScore((int) Math.round(econ.getBalance(p.getName())));
+			p.setScoreboard(board);
+			this.players.add(p.getName());
+			getServer().getScheduler().scheduleSyncRepeatingTask(this,
+					new UpdateScoreboard(this, p, obj), 20L, 20L);
+		}
 	}
-	
+
 	@EventHandler
 	public void onQuit(PlayerQuitEvent e) {
 		this.players.remove(e.getPlayer().getName());
 	}
-	
-	public boolean economy() {
+
+	public boolean setupEconomy() {
 		if (Bukkit.getServer().getPluginManager().getPlugin("Vault") == null) {
 			return false;
 		}
@@ -72,26 +82,26 @@ public class SidebarEcon extends JavaPlugin implements Listener {
 		econ = rsp.getProvider();
 		return econ != null;
 	}
-	
+
 	private class UpdateScoreboard extends BukkitRunnable {
-		
+
 		Objective obj;
 		Player player;
 		SidebarEcon sidebar;
-		
+
 		UpdateScoreboard(SidebarEcon econ, Player player, Objective obj) {
 			this.obj = obj;
 			this.player = player;
 			this.sidebar = econ;
 		}
-		
+
 		public void run() {
 			if (sidebar.players.contains(player.getName())) {
 				Score score = obj.getScore(player);
-				score.setScore((int) Math.round(econ.getBalance(player.getName())));
-				new UpdateScoreboard(sidebar, player, obj).runTaskLater(sidebar, 20);
+				score.setScore((int) Math.round(econ.getBalance(player
+						.getName())));
 			}
 		}
 	}
-	
+
 }
